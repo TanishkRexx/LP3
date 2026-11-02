@@ -1,0 +1,88 @@
+
+# Bank Customer Churn Prediction using Neural Network
+
+import pandas as pd
+
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
+from sklearn.neural_network import MLPClassifier
+from sklearn.metrics import accuracy_score, confusion_matrix, classification_report
+
+# Step 1: Load dataset
+data = pd.read_csv("Churn_Modelling.csv")
+
+print("Dataset Shape:", data.shape)
+
+# Step 2: Remove unnecessary columns
+data.drop(
+    ["RowNumber", "CustomerId", "Surname"],
+    axis=1,
+    inplace=True
+)
+
+# Step 3: Convert categorical data into numeric
+data = pd.get_dummies(
+    data,
+    columns=["Geography", "Gender"],
+    drop_first=True,
+    dtype=int
+)
+
+# Step 4: Separate input and output
+X = data.drop("Exited", axis=1)
+y = data["Exited"]
+
+# Step 5: Split dataset
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y,
+    test_size=0.2,
+    random_state=42,
+    stratify=y
+)
+
+# Step 6: Feature scaling
+scaler = StandardScaler()
+
+X_train = scaler.fit_transform(X_train)
+X_test = scaler.transform(X_test)
+
+# Step 7: Create Neural Network
+model = MLPClassifier(
+    hidden_layer_sizes=(16, 8),
+    activation="relu",
+    solver="adam",
+    max_iter=300,
+    random_state=42,
+    early_stopping=True
+)
+
+# Step 8: Train model
+model.fit(X_train, y_train)
+
+# Step 9: Make predictions
+y_pred = model.predict(X_test)
+
+# Step 10: Evaluate model
+print("\nNeural Network Results")
+
+print("Accuracy:",
+      accuracy_score(y_test, y_pred) * 100, "%")
+
+print("\nConfusion Matrix:")
+print(confusion_matrix(y_test, y_pred))
+
+print("\nClassification Report:")
+print(classification_report(y_test, y_pred))
+
+# Step 11: Predict a new customer
+sample = X.iloc[[0]]
+sample_scaled = scaler.transform(sample)
+
+prediction = model.predict(sample_scaled)
+
+print("\nCustomer Churn Prediction:")
+
+if prediction[0] == 1:
+    print("Customer will leave the bank (Churn)")
+else:
+    print("Customer will stay with the bank (Not Churn)")
